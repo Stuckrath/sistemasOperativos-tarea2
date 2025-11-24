@@ -6,9 +6,17 @@
 #define C_RESET "\033[0m"
 #define USAGE printf(C_RED"USAGE: ./sim Nmarcos tamanomarco [--verbose] traza.txt"C_RESET)
 
+typedef unsigned va; //virtual adress
+typedef unsigned pa; //physical adress
+
 unsigned Nmarcos;
 unsigned marcosize;
 char verbose;
+
+
+pa translate(va npv){
+
+}
 
 int main(int argc, char *argv[]){
     ///EXTRACT ARGS
@@ -41,14 +49,48 @@ int main(int argc, char *argv[]){
         marcosize>>=1;
         b++;
     }
-    unsigned PAGE_SIZE=1<<b;
-    unsigned MASK=PAGE_SIZE-1;
+    va PAGE_SIZE=1<<b;
+    va MASK=PAGE_SIZE-1;
     //offset = VA & MASK,
     //npv = VA ≫ b.
 
-    //read entries
-    int VA;
-    fscanf(trace,"0x%x",&VA);
-    printf("0x%x",VA);
+    //create page table
+    pa valid_bit = 1<<(sizeof(va)*8-b);
+    pa dirty_bit = valid_bit<<1;
+    pa *PAGE_TABLE = (pa *)calloc(1<<(sizeof(va)*8-b),sizeof(pa));
+    pa TABLE_MASK = (~0)>>b;
+
+    //read adresses
+    int hits=0;
+    int fallos=0;
+    while (!feof(trace)){
+        va VA;
+        fscanf(trace,"0x%x\n",&VA);
+        //printf("0x%x\n",VA);
+
+        va offset = VA & MASK;
+        va npv = VA >> b;
+
+        //getting page table entry
+        pa pte = PAGE_TABLE[npv];
+        pa marco;
+        if (pte & valid_bit){
+            //HIT
+            marco = pte & TABLE_MASK;
+            hits++;
+        }else{
+            //FALLO
+            marco = 16;
+            PAGE_TABLE[npv] = valid_bit | dirty_bit | marco;
+            printf("FALLO DE PAGINA %x\n",PAGE_TABLE[npv]);
+            fallos++;
+        }
+
+        pa PA = (marco << b) | (pa)offset;
+
+        //printf("0x%x\n",PA);
+    }
+
+    printf("HIT %d / FALLOS %d",hits,fallos);
 
 }

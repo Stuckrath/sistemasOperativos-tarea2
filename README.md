@@ -12,6 +12,7 @@ Para compilar y ejecutar:
 ```
 gcc -s sim.c -o sim
 ./sim Nmarcos tamañomarco [--verbose] traza.txt
+[Ej: ./sim 8 4096 trace2.txt]
 ```
 Donde Nmarcos es el número de marcos disponibles
 tamañomarco el tamaño de cada marco en bytes
