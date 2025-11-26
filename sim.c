@@ -54,13 +54,14 @@ int main(int argc, char *argv[]){
     pa valid_bit = 1<<(sizeof(pa)*8-1);
     pa used_bit = 1<<(sizeof(pa)*8-2);
     pa *PAGE_TABLE = (pa *)calloc(1<<(sizeof(va)*8-b),sizeof(pa));
-    pa TABLE_MASK = 1<<(sizeof(pa)*8-2)-1;
+    pa TABLE_MASK = (1<<(sizeof(pa)*8-2))-1;
 
     //marcos disponible (para algoritmo de reloj)
     va *FRAMES = (va *)calloc(Nmarcos,sizeof(va));
     va clock_valid_bit = 1<<(sizeof(va)*8-1);
     va clock_used_bit = 1<<(sizeof(va)*8-2);
-    va CLOCK_MASK = 1<<(sizeof(va)*8-2)-1;
+    va CLOCK_MASK = (1<<(sizeof(va)*8-2))-1;
+    printf("CM: 0x%x\n",CLOCK_MASK);
     pa clock=0;
 
     //read adresses
@@ -69,7 +70,6 @@ int main(int argc, char *argv[]){
     while (!feof(trace)){
         va VA;
         fscanf(trace,"0x%x\n",&VA);
-        //printf("0x%x\n",VA);
 
         va offset = VA & MASK;
         va npv = VA >> b;
@@ -122,13 +122,11 @@ int main(int argc, char *argv[]){
             clock++;
             clock%=Nmarcos;
 
-            printf("FALLO DE PAGINA 0x%x\n",PAGE_TABLE[npv]);
+            printf("FALLO DE PAGINA page: %x, marco:0x%x\n",npv,marco);
             fallos++;
         }
 
         pa PA = (marco << b) | (pa)offset;
-
-        //printf("0x%x\n",PA);
     }
 
     printf("HIT %d / FALLOS %d",hits,fallos);
