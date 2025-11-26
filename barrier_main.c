@@ -1,16 +1,25 @@
 #include "barrier.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <pthread.h>
+#include <sys/syscall.h>
+
+#ifndef SYS_gettid
+#error "SYS_gettid unavailable on this system"
+#endif
+
+#define gettid() ((pid_t)syscall(SYS_gettid))
 
 reusableBarrier RB;
 
 void *work(void* args){
     while(RB.etapa<=RB.maxE){
         int random = rand()%50;
-        _sleep(random*10);
-        printf("Hebra [%d] esperando en etapa %d \n", _threadid, RB.etapa);
+        usleep(random*10);
+        printf("Hebra [%d] esperando en etapa %d \n", gettid() , RB.etapa);
         useRB(&RB);
-        printf("Hebra [%d] paso barrera y esta ahora en etapa %d \n", _threadid, RB.etapa);
+        printf("Hebra [%d] paso barrera y esta ahora en etapa %d \n", gettid() , RB.etapa);
     }
 }
 
