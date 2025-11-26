@@ -13,11 +13,6 @@ unsigned Nmarcos;
 unsigned marcosize;
 char verbose;
 
-
-pa translate(va npv){
-
-}
-
 int main(int argc, char *argv[]){
     ///EXTRACT ARGS
     if (argc<4){
@@ -44,9 +39,10 @@ int main(int argc, char *argv[]){
 
     ///find page bits
     unsigned b=0;
-    while (marcosize>1)
+    unsigned temp = marcosize;
+    while (temp>1)
     {
-        marcosize>>=1;
+        temp>>=1;
         b++;
     }
     va PAGE_SIZE=1<<b;
@@ -55,10 +51,17 @@ int main(int argc, char *argv[]){
     //npv = VA ≫ b.
 
     //create page table
-    pa valid_bit = 1<<(sizeof(va)*8-b);
-    pa dirty_bit = valid_bit<<1;
+    pa valid_bit = 1<<(sizeof(pa)*8-1);
+    pa used_bit = 1<<(sizeof(pa)*8-2);
     pa *PAGE_TABLE = (pa *)calloc(1<<(sizeof(va)*8-b),sizeof(pa));
-    pa TABLE_MASK = (~0)>>b;
+    pa TABLE_MASK = 1<<(sizeof(pa)*8-2)-1;
+
+    //marcos disponible (para algoritmo de reloj)
+    va *FRAMES = (va *)calloc(Nmarcos,sizeof(va));
+    va clock_valid_bit = 1<<(sizeof(va)*8-1);
+    va clock_used_bit = 1<<(sizeof(va)*8-2);
+    va CLOCK_MASK = 1<<(sizeof(va)*8-2)-1;
+    pa clock=0;
 
     //read adresses
     int hits=0;
@@ -77,12 +80,49 @@ int main(int argc, char *argv[]){
         if (pte & valid_bit){
             //HIT
             marco = pte & TABLE_MASK;
+            //marcamos como usado
+            PAGE_TABLE[npv] = valid_bit | used_bit | marco;
+            FRAMES[marco] = clock_valid_bit | clock_used_bit | npv;
+
             hits++;
         }else{
             //FALLO
-            marco = 16;
-            PAGE_TABLE[npv] = valid_bit | dirty_bit | marco;
-            printf("FALLO DE PAGINA %x\n",PAGE_TABLE[npv]);
+            while (1)
+            {
+                va clockentry = FRAMES[clock];
+
+                //revisa si es valido
+                if (clockentry & clock_valid_bit){
+                    //revisa used bit
+                    if (clockentry & clock_used_bit){
+                        //marcamos como no usado
+                        PAGE_TABLE[clockentry & CLOCK_MASK] &= ~used_bit;
+                        FRAMES[clock] &= ~clock_used_bit;
+                    }else{
+                        //quitamos marco de pagina
+                        PAGE_TABLE[clockentry & CLOCK_MASK] &= ~valid_bit;
+                        //lo damos a npv
+                        FRAMES[clock] = clock_valid_bit | clock_used_bit | npv;
+                        PAGE_TABLE[npv] = valid_bit | used_bit | clock;
+                        break;
+                    }
+                }else{
+                    //toma el marco
+                    PAGE_TABLE[npv] = valid_bit | used_bit | clock;
+                    FRAMES[clock] = clock_valid_bit | clock_used_bit | npv;
+                    break;
+                }
+
+                clock++;
+                clock%=Nmarcos;
+            }
+            
+            marco = clock;
+
+            clock++;
+            clock%=Nmarcos;
+
+            printf("FALLO DE PAGINA 0x%x\n",PAGE_TABLE[npv]);
             fallos++;
         }
 
