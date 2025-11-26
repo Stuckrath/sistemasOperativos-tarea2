@@ -1,0 +1,9 @@
+Como compilar:
+gcc barrier_main.c barrier.c -o barrierReutilizable.exe -pthread
+
+Como ejecutar:
+.\barrierReutilizable.exe N E
+int N: Cantidad de Hebras a usar (se puede dejar 
+vacio o colocar un número negativo para usar default: 5)
+int E: Cantidad de etapas para cada hebra (se puede dejar 
+vacio o colocar un numero negativo para usar default: 4)
