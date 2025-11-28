@@ -61,7 +61,6 @@ int main(int argc, char *argv[]){
     va clock_valid_bit = 1<<(sizeof(va)*8-1);
     va clock_used_bit = 1<<(sizeof(va)*8-2);
     va CLOCK_MASK = (1<<(sizeof(va)*8-2))-1;
-    printf("CM: 0x%x\n",CLOCK_MASK);
     pa clock=0;
 
     //read adresses
@@ -77,6 +76,8 @@ int main(int argc, char *argv[]){
         //getting page table entry
         pa pte = PAGE_TABLE[npv];
         pa marco;
+
+        char ishit=0;
         if (pte & valid_bit){
             //HIT
             marco = pte & TABLE_MASK;
@@ -85,6 +86,7 @@ int main(int argc, char *argv[]){
             FRAMES[marco] = clock_valid_bit | clock_used_bit | npv;
 
             hits++;
+            ishit=1;
         }else{
             //FALLO
             while (1)
@@ -122,13 +124,17 @@ int main(int argc, char *argv[]){
             clock++;
             clock%=Nmarcos;
 
-            printf("FALLO DE PAGINA page: %x, marco:0x%x\n",npv,marco);
+            //printf("FALLO DE PAGINA page: %x, marco:0x%x\n",npv,marco);
             fallos++;
         }
 
         pa PA = (marco << b) | (pa)offset;
-    }
 
-    printf("HIT %d / FALLOS %d",hits,fallos);
+        if (verbose) printf("0x%x | %3d | 0x%x | %s | %3d | 0x%x\n",VA,npv,offset,(ishit)?" HIT ":"FALLO",marco,PA);
+    }
+    //explica el significado de las salidas de verbose
+    if (verbose) printf("Virtual Addres | npv | offset | HIT/FALLO | marco | Physical Addres\n");
+
+    printf("Refs: %d | PageFaults: %d | FaultRate: %d%%",hits+fallos,fallos,(100*fallos)/(hits+fallos));
 
 }
