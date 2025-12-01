@@ -140,4 +140,6 @@ int main(int argc, char *argv[]){
 
     printf("Refs: %d | PageFaults: %d | FaultRate: %d%%",hits+fallos,fallos,(100*fallos)/(hits+fallos));
 
+    free(PAGE_TABLE);
+    free(FRAMES);
 }
