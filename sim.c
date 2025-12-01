@@ -65,7 +65,6 @@ int main(int argc, char *argv[]){
     va clock_used_bit = 1<<(sizeof(va)*8-2);
     va CLOCK_MASK = (1<<(sizeof(va)*8-2))-1;
     pa clock=0;
-    printf("->%p\n",PAGE_TABLE);
 
     //read adresses
     int hits=0;
