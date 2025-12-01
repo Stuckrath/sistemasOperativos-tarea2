@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define max(a,b) (a>b)?a:b
+
 #define C_RED "\033[31m"
 #define C_RESET "\033[0m"
 #define USAGE printf(C_RED"USAGE: ./sim Nmarcos tamanomarco [--verbose] traza.txt"C_RESET)
@@ -37,10 +39,11 @@ int main(int argc, char *argv[]){
         USAGE; return 1;
     }
 
+
     ///find page bits
     unsigned b=0;
-    unsigned temp = marcosize;
-    while (temp>1)
+    unsigned temp = marcosize-1;
+    while (temp>0)
     {
         temp>>=1;
         b++;
@@ -53,7 +56,7 @@ int main(int argc, char *argv[]){
     //create page table
     pa valid_bit = 1<<(sizeof(pa)*8-1);
     pa used_bit = 1<<(sizeof(pa)*8-2);
-    pa *PAGE_TABLE = (pa *)calloc(1<<(sizeof(va)*8-b),sizeof(pa));
+    pa *PAGE_TABLE = (pa *)calloc(1<<(sizeof(va)*8-(max(b,4))),sizeof(pa)); //el max es porque el programa no funciona si la tabla es demasiado grando, y no usamos todos los bits de va
     pa TABLE_MASK = (1<<(sizeof(pa)*8-2))-1;
 
     //marcos disponible (para algoritmo de reloj)
@@ -62,6 +65,7 @@ int main(int argc, char *argv[]){
     va clock_used_bit = 1<<(sizeof(va)*8-2);
     va CLOCK_MASK = (1<<(sizeof(va)*8-2))-1;
     pa clock=0;
+    printf("->%p\n",PAGE_TABLE);
 
     //read adresses
     int hits=0;
@@ -130,7 +134,7 @@ int main(int argc, char *argv[]){
 
         pa PA = (marco << b) | (pa)offset;
 
-        if (verbose) printf("0x%x | %3d | 0x%x | %s | %3d | 0x%x\n",VA,npv,offset,(ishit)?" HIT ":"FALLO",marco,PA);
+        if (verbose) printf("0x%6x | %3d | 0x%x | %s | %3d | 0x%x\n",VA,npv,offset,(ishit)?" HIT ":"FALLO",marco,PA);
     }
     //explica el significado de las salidas de verbose
     if (verbose) printf("Virtual Addres | npv | offset | HIT/FALLO | marco | Physical Addres\n");
